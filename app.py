@@ -52,7 +52,10 @@ def create_user():
     password = data.get("password")
 
     if username and password:
+        # Encrypting
         hashed_password = bcrypt.hashpw(str.encode(password), bcrypt.gensalt())
+
+        # Creating User
         user = User(username=username, password=hashed_password, role='user')
         db.session.add(user)
         db.session.commit()
@@ -60,7 +63,7 @@ def create_user():
 
     return jsonify({"message": "Invalid Data!"}), 400
 
-# Update User
+# Update Password
 @app.route('/user_update/<int:id_user>', methods=["PUT"])
 @login_required
 def update_user(id_user):
@@ -70,11 +73,15 @@ def update_user(id_user):
     if id_user != current_user.id and current_user.role == 'user':
         return jsonify({'message': "Operation Not Permitted!"}), 403
 
-    if user and data.get("password"):
-        user.password = data.get("password")
-        db.session.commit()
+    if user:
+        # If a new password be provided
+        if data.get("password"):
+            # Encrypting the new password
+            hashed_password = bcrypt.hashpw(data.get("password").encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            user.password = hashed_password
+            db.session.commit()
 
-        return jsonify({"message": f"User {id_user} Updated Sucessfully!"})
+            return jsonify({"message": f"User {id_user} Updated Sucessfully!"})
     
     return jsonify({"message": "User Not Found!"}), 404
 
@@ -101,7 +108,7 @@ def delete_user(id_user):
 @app.route('/diets_create', methods=['POST'])
 @login_required
 def create_diet():
-    data = request.get__json()
+    data = request.get_json()
 
     new_diet = Diet(
         name=data['name'],
